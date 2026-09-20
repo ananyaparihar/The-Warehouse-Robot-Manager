@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Warehouse Robot Manager — Live Algorithm Demos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #E8E9E2;
+    --panel: #F5F5F0;
+    --panel-raised: #FFFFFF;
+    --ink: #1B1E19;
+    --muted: #62685C;
+    --line: #C7CBBC;
+    --accent: #D85A2A;
+    --accent-ink: #FFFFFF;
+    --accent-2: #0E8F80;
+    --accent-2-ink: #FFFFFF;
+    --grid-line: rgba(27,30,25,0.07);
+    --danger: #B23A3A;
+    --success: #1E7A4C;
+    --shadow: 0 1px 0 rgba(27,30,25,0.06);
+    --radius: 6px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14161A;
+      --panel: #1B1E22;
+      --panel-raised: #21252A;
+      --ink: #E9EAE4;
+      --muted: #9BA096;
+      --line: #33383A;
+      --accent: #E8703F;
+      --accent-2: #23B3A0;
+      --grid-line: rgba(255,255,255,0.06);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161A;
+    --panel: #1B1E22;
+    --panel-raised: #21252A;
+    --ink: #E9EAE4;
+    --muted: #9BA096;
+    --line: #33383A;
+    --accent: #E8703F;
+    --accent-2: #23B3A0;
+    --grid-line: rgba(255,255,255,0.06);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  html {
+    scroll-padding-top: env(safe-area-inset-top, 0px);
+    scroll-behavior: smooth;
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, sans-serif;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  h1, h2, h3, .display {
+    font-family: 'Space Grotesk', sans-serif;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  code, .mono {
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  a { color: inherit; }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- Hero ---------- */
+  header.hero {
+    padding: 56px 0 40px;
+    border-bottom: 1px solid var(--line);
+  }
+  .kicker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  h1.title {
+    font-size: clamp(34px, 5vw, 54px);
+    line-height: 1.05;
+    font-weight: 700;
+    max-width: 14ch;
+  }
+  .lede {
+    max-width: 62ch;
+    margin-top: 18px;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .stack {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .stack-layer {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    align-items: center;
+    gap: 18px;
+    padding: 14px 18px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(8px);
+    animation: layerIn 0.5s ease forwards;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .stack-layer:hover { border-color: var(--accent); }
+  .stack-layer:nth-child(1) { animation-delay: 0.05s; }
+  .stack-layer:nth-child(2) { animation-delay: 0.15s; }
+  .stack-layer:nth-child(3) { animation-delay: 0.25s; }
+  .stack-layer:nth-child(4) { animation-delay: 0.35s; }
+  .stack-layer:nth-child(5) { animation-delay: 0.45s; }
+  @keyframes layerIn { to { opacity: 1; transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce) {
+    .stack-layer { animation: none; opacity: 1; transform: none; }
+  }
+  .stack-layer .num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+  }
+  .stack-layer .name { font-weight: 600; font-size: 15px; }
+  .stack-layer .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+  /* ---------- Tab rail ---------- */
+  nav.rail {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .rail-inner {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    padding: 10px 0;
+    scrollbar-width: none;
+  }
+  .rail-inner::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 9px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+  }
+  .tab-btn.active {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+
+  main { padding: 44px 0 90px; }
+  .module { display: none; }
+  .module.active { display: block; animation: fadeIn 0.25s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .module.active { animation: none; } }
+
+  .module-head { margin-bottom: 28px; }
+  .module-head .num { font-family: 'IBM Plex Mono', monospace; color: var(--accent); font-size: 13px; }
+  .module-head h2 { font-size: 26px; margin-top: 6px; }
+  .module-head p { color: var(--muted); max-width: 68ch; margin-top: 10px; line-height: 1.6; }
+
+  .demo-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 860px) { .demo-grid { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .panel h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .viewport-wrap { overflow-x: auto; }
+  svg.diagram { width: 100%; height: auto; display: block; min-width: 480px; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+  button.action {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    border: none;
+    background: var(--accent);
+    color: var(--accent-ink);
+    cursor: pointer;
+    transition: filter 0.15s ease;
+  }
+  button.action:hover { filter: brightness(1.08); }
+  button.action:focus-visible, .tab-btn:focus-visible, .stack-layer:focus-visible, input:focus-visible {
+    outline: 2px solid var(--accent-2);
+    outline-offset: 2px;
+  }
+  button.action.secondary {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
+  button.action:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  label.field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  input[type="number"], input[type="text"] {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    padding: 7px 9px;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    background: var(--panel-raised);
+    color: var(--ink);
+    width: 90px;
+  }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+  .readout {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 12px 14px;
+    height: 220px;
+    overflow-y: auto;
+    color: var(--muted);
+  }
+  .readout .hl { color: var(--ink); }
+  .readout .ok { color: var(--success); }
+  .readout .no { color: var(--danger); }
+
+  .stat-row { display: flex; gap: 18px; margin-top: 12px; flex-wrap: wrap; }
+  .stat { }
+  .stat .v { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; }
+  .stat .l { font-size: 12px; color: var(--muted); }
+
+  table.dp { border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+  table.dp td, table.dp th {
+    border: 1px solid var(--line);
+    padding: 5px 8px;
+    text-align: center;
+    min-width: 34px;
+  }
+  table.dp th { background: var(--panel-raised); font-weight: 600; }
+  table.dp td.row-label { text-align: left; background: var(--panel-raised); font-weight: 500; min-width: 90px; }
+  table.dp td.chosen { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+
+  .item-row { display: grid; grid-template-columns: 1fr 70px 70px; gap: 8px; align-items: center; margin-bottom: 8px; font-size: 13px; }
+  .item-row span { color: var(--muted); }
+
+  .route-chip-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .chip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 6px 11px;
+    border-radius: 4px;
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+  }
+  .chip.dock { background: var(--accent-2); color: var(--accent-2-ink); border-color: var(--accent-2); }
+  .arrow-sep { color: var(--muted); }
+
+  .checkline { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 30px 0 50px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1 class="title">The Warehouse Robot Manager</h1>
+    <p class="lede">An algorithmic backend for an autonomous e-commerce warehouse robot fleet — indexing a large SKU catalogue for fast lookup, routing robots across the warehouse floor, packing each robot's payload within capacity, coordinating multi-stop pick routes, and dispatching pending tasks in real time as new orders arrive.</p>
+
+    <div class="stack" id="stack">
+      <div class="stack-layer" data-target="m1" tabindex="0" role="button">
+        <div><span class="num">01</span></div>
+        <div><div class="name">Inventory Index</div><div class="sub">B+ Tree — find any SKU's bin in a handful of comparisons</div></div>
+      </div>
+      <div class="stack-layer" data-target="m2" tabindex="0" role="button">
+        <div><span class="num">02</span></div>
+        <div><div class="name">Navigation</div><div class="sub">Dijkstra — shortest live route across the floor graph</div></div>
+      </div>
+      <div class="stack-layer" data-target="m3" tabindex="0" role="button">
+        <div><span class="num">03</span></div>
+        <div><div class="name">Task Allocation</div><div class="sub">0/1 Knapsack DP — best order mix within payload capacity</div></div>
+      </div>
+      <div class="stack-layer" data-target="m4" tabindex="0" role="button">
+        <div><span class="num">04</span></div>
+        <div><div class="name">Coordination</div><div class="sub">Branch and Bound — optimal multi-stop pick route</div></div>
+      </div>
+      <div class="stack-layer" data-target="m5" tabindex="0" role="button">
+        <div><span class="num">05</span></div>
+        <div><div class="name">Real-Time Scheduling</div><div class="sub">Min-Heap — always dispatch the most urgent task next</div></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<nav class="rail">
+  <div class="wrap">
+    <div class="rail-inner" id="railInner">
+      <button class="tab-btn active" data-target="m1">Inventory Index</button>
+      <button class="tab-btn" data-target="m2">Navigation</button>
+      <button class="tab-btn" data-target="m3">Task Allocation</button>
+      <button class="tab-btn" data-target="m4">Coordination</button>
+      <button class="tab-btn" data-target="m5">Scheduling</button>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <!-- ============ MODULE 1 : B+ TREE ============ -->
+  <section class="module active" id="m1">
+    <div class="module-head">
+      <div class="num">Module 1 · Tree-Based Data Management</div>
+      <h2>Look up a SKU</h2>
+      <p>Pick a SKU below. The tree compares it against the root's divider keys, picks a branch, and scans the matching leaf — this is the same lookup a B+ Tree index performs against a database-backed catalogue.</p>
+    </div>
+    <div class="demo-grid">
+      <div class="panel">
+        <h3>SKU index</h3>
+        <div class="viewport-wrap">
+          <svg class="diagram" id="bptreeSvg" viewBox="0 0 760 420"></svg>
+        </div>
+        <div class="controls">
+          <label class="field">Search for
+            <select id="skuSelect" style="font-family:'IBM Plex Mono',monospace;padding:7px 9px;border-radius:4px;border:1px solid var(--line);background:var(--panel-raised);color:var(--ink);">
+              <option value="A050">SKU-A050</option>
+              <option value="B210">SKU-B210</option>
+              <option value="C330">SKU-C330</option>
+              <option value="F600">SKU-F600</option>
+              <option value="H800">SKU-H800</option>
+              <option value="K200" selected>SKU-K200</option>
+              <option value="M500">SKU-M500</option>
+              <option value="P800">SKU-P800</option>
+              <option value="R100">SKU-R100</option>
+              <option value="S200">SKU-S200</option>
+              <option value="T740">SKU-T740</option>
+              <option value="Z910">SKU-Z910</option>
+            </select>
+          </label>
+          <button class="action" id="bptreeSearchBtn">Search</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Trace</h3>
+        <div class="readout" id="bptreeLog">Pick a SKU and press Search.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MODULE 2 : DIJKSTRA ============ -->
+  <section class="module" id="m2">
+    <div class="module-head">
+      <div class="num">Module 2 · Graph Modeling and Network Optimization</div>
+      <h2>Route a robot across the floor</h2>
+      <p>Click a start waypoint, then an end waypoint. Dijkstra's algorithm computes the shortest weighted path through the floor graph and the trace shows every distance relaxation along the way.</p>
+    </div>
+    <div class="demo-grid">
+      <div class="panel">
+        <h3>Floor graph — click start, then end</h3>
+        <div class="viewport-wrap">
+          <svg class="diagram" id="graphSvg" viewBox="0 0 640 300"></svg>
+        </div>
+        <div class="stat-row">
+          <div class="stat"><div class="v" id="pathCost">—</div><div class="l">total path cost</div></div>
+        </div>
+        <div class="controls">
+          <button class="action secondary" id="graphResetBtn">Reset selection</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Trace</h3>
+        <div class="readout" id="graphLog">Click a waypoint to set the start.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MODULE 3 : KNAPSACK ============ -->
+  <section class="module" id="m3">
+    <div class="module-head">
+      <div class="num">Module 3 · Dynamic Programming for Optimization</div>
+      <h2>Load the robot's payload</h2>
+      <p>Set each pending order's weight and value, and the robot's capacity. The 0/1 Knapsack DP table builds the optimal achievable value for every (item, capacity) pair — the bottom-right cell is the answer, and the highlighted path shows which orders got picked.</p>
+    </div>
+    <div class="demo-grid">
+      <div class="panel">
+        <h3>Pending orders</h3>
+        <div id="itemRows"></div>
+        <label class="field" style="margin-top:14px;">Robot capacity: <span id="capVal" class="hl mono">8</span>
+          <input type="range" id="capSlider" min="2" max="15" value="8">
+        </label>
+        <div class="controls">
+          <button class="action" id="knapsackRunBtn">Compute optimal load</button>
+        </div>
+        <div class="stat-row">
+          <div class="stat"><div class="v" id="knapsackValue">—</div><div class="l">optimal value</div></div>
+          <div class="stat"><div class="v" id="knapsackWeight">—</div><div class="l">weight used</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>DP table</h3>
+        <div class="viewport-wrap" id="dpTableWrap" style="max-height:280px;overflow-y:auto;">Adjust orders or capacity, then compute.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MODULE 4 : BRANCH AND BOUND ============ -->
+  <section class="module" id="m4">
+    <div class="module-head">
+      <div class="num">Module 4 · Backtracking and Branch & Bound</div>
+      <h2>Order a multi-stop pick route</h2>
+      <p>Choose which stops this trip needs. Branch and Bound explores possible visiting orders, pruning any partial route whose lower bound already exceeds the best complete route found — you'll see exactly how many of the possible orderings got pruned.</p>
+    </div>
+    <div class="demo-grid">
+      <div class="panel">
+        <h3>Stops on this trip</h3>
+        <div id="tspChecks"></div>
+        <div class="controls">
+          <button class="action" id="tspRunBtn">Find optimal route</button>
+        </div>
+        <div class="route-chip-row" id="tspRoute"></div>
+        <div class="stat-row">
+          <div class="stat"><div class="v" id="tspCost">—</div><div class="l">total distance</div></div>
+          <div class="stat"><div class="v" id="tspPruned">—</div><div class="l">branches pruned</div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Trace</h3>
+        <div class="readout" id="tspLog">Select stops and press Find optimal route.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MODULE 5 : HEAP ============ -->
+  <section class="module" id="m5">
+    <div class="module-head">
+      <div class="num">Module 5 · Advanced Data Structures for Enterprise Applications</div>
+      <h2>Dispatch the next task</h2>
+      <p>Add pending tasks with an urgency score (lower means more urgent). The min-heap always keeps the most urgent task at the root — add a few, then dispatch and watch the heap re-sort itself.</p>
+    </div>
+    <div class="demo-grid">
+      <div class="panel">
+        <h3>Task queue</h3>
+        <div class="viewport-wrap">
+          <svg class="diagram" id="heapSvg" viewBox="0 0 640 260"></svg>
+        </div>
+        <div class="controls">
+          <label class="field">Task label
+            <input type="text" id="taskLabel" value="ORD-118" maxlength="10">
+          </label>
+          <label class="field">Urgency
+            <input type="number" id="taskPriority" value="5" min="1" max="99">
+          </label>
+          <button class="action" id="heapAddBtn">Add task</button>
+          <button class="action secondary" id="heapPopBtn">Dispatch next</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Trace</h3>
+        <div class="readout" id="heapLog">Add a task to begin.</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ============================================================
+// Shared helpers
+// ============================================================
+function svgEl(tag, attrs) {
+  const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+function log(id, html, cls) {
+  const box = document.getElementById(id);
+  const line = document.createElement("div");
+  if (cls) line.className = cls;
+  line.innerHTML = html;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+function clearLog(id, msg) {
+  document.getElementById(id).innerHTML = msg ? '<div>' + msg + '</div>' : '';
+}
+
+// ============================================================
+// Tabs
+// ============================================================
+const tabBtns = document.querySelectorAll(".tab-btn");
+const modules = document.querySelectorAll(".module");
+function activate(target) {
+  tabBtns.forEach(b => b.classList.toggle("active", b.dataset.target === target));
+  modules.forEach(m => m.classList.toggle("active", m.id === target));
+}
+tabBtns.forEach(b => b.addEventListener("click", () => {
+  activate(b.dataset.target);
+  document.querySelector("nav.rail").scrollIntoView({ behavior: "smooth", block: "start" });
+}));
+document.querySelectorAll(".stack-layer").forEach(layer => {
+  const go = () => { activate(layer.dataset.target); document.getElementById(layer.dataset.target).scrollIntoView({behavior:"smooth", block:"start"}); };
+  layer.addEventListener("click", go);
+  layer.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+});
+
+// ============================================================
+// MODULE 1 — B+ Tree search
+// ============================================================
+const bptree = {
+  root: { keys: ["M500"] },
+  internal: [
+    { keys: ["C330", "H800"], leafRange: [0,1,2] },   // left branch
+    { keys: ["R100", "T740"], leafRange: [3,4,5] },   // right branch
+  ],
+  leaves: [
+    { keys: ["A050", "B210"], zone: "Zone A" },
+    { keys: ["C330", "F600"], zone: "Zone A/B" },
+    { keys: ["H800", "K200"], zone: "Zone B" },
+    { keys: ["M500", "P800"], zone: "Zone C" },
+    { keys: ["R100", "S200"], zone: "Zone C/D" },
+    { keys: ["T740", "Z910"], zone: "Zone D" },
+  ]
+};
+function bpBoxCenter(b) { return { x: b.x + b.w/2, y: b.y }; }
+function drawBpTree(highlightBranch, highlightLeaf) {
+  const svg = document.getElementById("bptreeSvg");
+  svg.innerHTML = "";
+
+  const rootBox = { x: 300, y: 20, w: 160, h: 48 };
+  const internalBoxes = [
+    { x: 90, y: 140, w: 220, h: 48 },
+    { x: 450, y: 140, w: 220, h: 48 },
+  ];
+  const leafBoxes = [
+    { x: 10,  y: 280, w: 110, h: 62 },
+    { x: 130, y: 280, w: 110, h: 62 },
+    { x: 250, y: 280, w: 110, h: 62 },
+    { x: 400, y: 280, w: 110, h: 62 },
+    { x: 520, y: 280, w: 110, h: 62 },
+    { x: 640, y: 280, w: 110, h: 62 },
+  ];
+
+  // root -> internal connectors
+  internalBoxes.forEach((ib, bi) => {
+    const isOnPath = highlightBranch === bi;
+    svg.appendChild(svgEl("line", {
+      x1: rootBox.x + rootBox.w/2, y1: rootBox.y + rootBox.h,
+      x2: ib.x + ib.w/2, y2: ib.y,
+      stroke: isOnPath ? "var(--accent)" : "var(--line)", "stroke-width": isOnPath ? 2.4 : 1.4
+    }));
+  });
+  // internal -> leaf connectors
+  bptree.internal.forEach((node, bi) => {
+    node.leafRange.forEach(li => {
+      const ib = internalBoxes[bi], lb = leafBoxes[li];
+      const isOnPath = highlightBranch === bi && highlightLeaf === li;
+      svg.appendChild(svgEl("line", {
+        x1: ib.x + ib.w/2, y1: ib.y + ib.h,
+        x2: lb.x + lb.w/2, y2: lb.y,
+        stroke: isOnPath ? "var(--accent)" : "var(--line)", "stroke-width": isOnPath ? 2.4 : 1.4
+      }));
+    });
+  });
+  // horizontal leaf chain
+  for (let i = 0; i < leafBoxes.length - 1; i++) {
+    const a = leafBoxes[i], b = leafBoxes[i+1];
+    const y = a.y + a.h/2;
+    svg.appendChild(svgEl("line", { x1: a.x + a.w, y1: y, x2: b.x, y2: y, stroke: "var(--accent-2)", "stroke-width": 2 }));
+    svg.appendChild(svgEl("path", { d: `M ${b.x-7} ${y-5} L ${b.x} ${y} L ${b.x-7} ${y+5}`, fill: "none", stroke: "var(--accent-2)", "stroke-width": 2 }));
+  }
+
+  // root box
+  const rootHL = highlightBranch !== undefined;
+  svg.appendChild(svgEl("rect", { x: rootBox.x, y: rootBox.y, width: rootBox.w, height: rootBox.h, rx: 6, fill: rootHL ? "var(--accent)" : "var(--panel-raised)", stroke: "var(--line)" }));
+  const rt = svgEl("text", { x: rootBox.x + rootBox.w/2, y: rootBox.y + rootBox.h/2 + 5, "text-anchor": "middle", "font-family": "IBM Plex Mono, monospace", "font-size": 14, fill: rootHL ? "white" : "var(--ink)" });
+  rt.textContent = bptree.root.keys.join("  |  ");
+  svg.appendChild(rt);
+
+  // internal boxes
+  bptree.internal.forEach((node, bi) => {
+    const ib = internalBoxes[bi];
+    const isHL = highlightBranch === bi;
+    svg.appendChild(svgEl("rect", { x: ib.x, y: ib.y, width: ib.w, height: ib.h, rx: 6, fill: isHL ? "var(--accent)" : "var(--panel-raised)", stroke: "var(--line)" }));
+    const t = svgEl("text", { x: ib.x + ib.w/2, y: ib.y + ib.h/2 + 5, "text-anchor": "middle", "font-family": "IBM Plex Mono, monospace", "font-size": 13, fill: isHL ? "white" : "var(--ink)" });
+    t.textContent = node.keys.join("  |  ");
+    svg.appendChild(t);
+  });
+
+  // leaf boxes
+  leafBoxes.forEach((lb, i) => {
+    const isHL = highlightLeaf === i;
+    svg.appendChild(svgEl("rect", { x: lb.x, y: lb.y, width: lb.w, height: lb.h, rx: 6, fill: isHL ? "var(--accent)" : "var(--panel-raised)", stroke: "var(--line)" }));
+    const leafData = bptree.leaves[i];
+    const t1 = svgEl("text", { x: lb.x + lb.w/2, y: lb.y + 25, "text-anchor": "middle", "font-family": "IBM Plex Mono, monospace", "font-size": 11.5, fill: isHL ? "white" : "var(--ink)" });
+    t1.textContent = leafData.keys.join(", ");
+    svg.appendChild(t1);
+    const t2 = svgEl("text", { x: lb.x + lb.w/2, y: lb.y + 45, "text-anchor": "middle", "font-family": "Inter, sans-serif", "font-size": 10.5, fill: isHL ? "white" : "var(--muted)" });
+    t2.textContent = leafData.zone;
+    svg.appendChild(t2);
+  });
+}
+function bptreeSearch() {
+  const sku = document.getElementById("skuSelect").value;
+  clearLog("bptreeLog");
+
+  const rootKey = bptree.root.keys[0];
+  const branchIdx = sku < rootKey ? 0 : 1;
+  log("bptreeLog", `Comparing <span class="hl">SKU-${sku}</span> against root key [${rootKey}]`);
+  log("bptreeLog", branchIdx === 0 ? `SKU-${sku} &lt; ${rootKey} → descend left branch` : `SKU-${sku} &ge; ${rootKey} → descend right branch`);
+  drawBpTree(branchIdx);
+
+  setTimeout(() => {
+    const node = bptree.internal[branchIdx];
+    const [k0, k1] = node.keys;
+    let leafIdx;
+    if (sku < k0) leafIdx = node.leafRange[0];
+    else if (sku < k1) leafIdx = node.leafRange[1];
+    else leafIdx = node.leafRange[2];
+    log("bptreeLog", `Comparing against internal keys [${k0}, ${k1}]`);
+    log("bptreeLog", sku < k0 ? `→ descend into first child` : sku < k1 ? `→ descend into middle child` : `→ descend into last child`);
+    drawBpTree(branchIdx, leafIdx);
+
+    setTimeout(() => {
+      const leaf = bptree.leaves[leafIdx];
+      const found = leaf.keys.includes(sku);
+      log("bptreeLog", `Scanning leaf [${leaf.keys.join(", ")}] in ${leaf.zone}...`);
+      log("bptreeLog", found ? `<span class="ok">Found SKU-${sku} — record located in two descents.</span>` : `<span class="no">Not present in this leaf.</span>`);
+    }, 400);
+  }, 400);
+}
+document.getElementById("bptreeSearchBtn").addEventListener("click", bptreeSearch);
+drawBpTree();
+
+// ============================================================
+// MODULE 2 — Dijkstra
+// ============================================================
+const gNodes = {
+  Dock: { x: 60, y: 220 }, A1: { x: 250, y: 220 }, A2: { x: 440, y: 220 },
+  B1: { x: 60, y: 70 }, B2: { x: 250, y: 70 }, B3: { x: 440, y: 70 },
+  PICK: { x: 580, y: 30 }
+};
+const gEdges = [
+  ["Dock","A1",4], ["A1","A2",3], ["Dock","B1",2], ["A1","B2",3],
+  ["A2","B3",3], ["B1","B2",3], ["B2","B3",2], ["B3","PICK",2]
+];
+const adj = {};
+Object.keys(gNodes).forEach(n => adj[n] = []);
+gEdges.forEach(([u,v,w]) => { adj[u].push([v,w]); adj[v].push([u,w]); });
+
+let gSelection = [];
+function drawGraph(pathSet) {
+  const svg = document.getElementById("graphSvg");
+  svg.innerHTML = "";
+  gEdges.forEach(([u,v,w]) => {
+    const a = gNodes[u], b = gNodes[v];
+    const onPath = pathSet && pathSet.has(u+"-"+v);
+    svg.appendChild(svgEl("line", { x1:a.x, y1:a.y, x2:b.x, y2:b.y, stroke: onPath ? "var(--accent-2)" : "var(--line)", "stroke-width": onPath ? 3.5 : 1.6 }));
+    const mx = (a.x+b.x)/2, my = (a.y+b.y)/2;
+    const lbl = svgEl("text", { x: mx, y: my - 6, "text-anchor":"middle", "font-family":"IBM Plex Mono, monospace", "font-size": 11, fill: "var(--muted)" });
+    lbl.textContent = w;
+    svg.appendChild(lbl);
+  });
+  Object.entries(gNodes).forEach(([name, pos]) => {
+    const isSel = gSelection.includes(name);
+    const isDock = name === "Dock", isPick = name === "PICK";
+    const g = svgEl("g", { style: "cursor:pointer" });
+    g.appendChild(svgEl("circle", { cx: pos.x, cy: pos.y, r: isDock||isPick?24:20, fill: isSel ? "var(--accent)" : (isDock ? "var(--accent-2)" : isPick ? "#F5C4B3" : "var(--panel-raised)"), stroke: isSel ? "var(--accent)" : "var(--line)", "stroke-width": 1.6 }));
+    const t = svgEl("text", { x: pos.x, y: pos.y+4, "text-anchor":"middle", "font-family":"Inter, sans-serif", "font-weight":600, "font-size": 10.5, fill: isSel||isDock ? "white" : "var(--ink)" });
+    t.textContent = name;
+    g.appendChild(t);
+    g.addEventListener("click", () => handleNodeClick(name));
+    svg.appendChild(g);
+  });
+}
+function handleNodeClick(name) {
+  if (gSelection.length === 2) gSelection = [];
+  if (gSelection.includes(name)) return;
+  gSelection.push(name);
+  drawGraph();
+  if (gSelection.length === 1) {
+    clearLog("graphLog");
+    log("graphLog", `Start set to <span class="hl">${name}</span>. Now click an end waypoint.`);
+    document.getElementById("pathCost").textContent = "—";
+  } else if (gSelection.length === 2) {
+    runDijkstra(gSelection[0], gSelection[1]);
+  }
+}
+function runDijkstra(start, end) {
+  clearLog("graphLog");
+  log("graphLog", `Running Dijkstra from <span class="hl">${start}</span> to <span class="hl">${end}</span>`);
+  const dist = {}, prev = {}, visited = new Set();
+  Object.keys(gNodes).forEach(n => dist[n] = Infinity);
+  dist[start] = 0;
+  const pq = [[0, start]];
+  while (pq.length) {
+    pq.sort((a,b) => a[0]-b[0]);
+    const [d, u] = pq.shift();
+    if (visited.has(u)) continue;
+    visited.add(u);
+    log("graphLog", `Visit <span class="hl">${u}</span> (dist ${d})`);
+    adj[u].forEach(([v, w]) => {
+      if (dist[u] + w < dist[v]) {
+        dist[v] = dist[u] + w;
+        prev[v] = u;
+        pq.push([dist[v], v]);
+        log("graphLog", `&nbsp;&nbsp;relax ${v}: dist → ${dist[v]} via ${u}`);
+      }
+    });
+  }
+  const path = [];
+  let cur = end;
+  while (cur) { path.unshift(cur); cur = prev[cur]; }
+  const pathSet = new Set();
+  for (let i = 0; i < path.length-1; i++) { pathSet.add(path[i]+"-"+path[i+1]); pathSet.add(path[i+1]+"-"+path[i]); }
+  drawGraph(pathSet);
+  document.getElementById("pathCost").textContent = dist[end];
+  log("graphLog", `<span class="ok">Shortest path: ${path.join(" → ")} (cost ${dist[end]})</span>`);
+}
+document.getElementById("graphResetBtn").addEventListener("click", () => {
+  gSelection = []; drawGraph(); clearLog("graphLog", "Click a waypoint to set the start.");
+  document.getElementById("pathCost").textContent = "—";
+});
+drawGraph();
+
+// ============================================================
+// MODULE 3 — Knapsack DP
+// ============================================================
+const knapsackItems = [
+  { name: "Order A", w: 2, v: 3 },
+  { name: "Order B", w: 3, v: 4 },
+  { name: "Order C", w: 4, v: 5 },
+  { name: "Order D", w: 5, v: 8 },
+];
+function renderItemRows() {
+  const wrap = document.getElementById("itemRows");
+  wrap.innerHTML = "";
+  const head = document.createElement("div");
+  head.className = "item-row";
+  head.innerHTML = "<span>Item</span><span>Weight</span><span>Value</span>";
+  wrap.appendChild(head);
+  knapsackItems.forEach((it, i) => {
+    const row = document.createElement("div");
+    row.className = "item-row";
+    row.innerHTML = `
+      <div>${it.name}</div>
+      <input type="number" min="1" max="12" value="${it.w}" data-i="${i}" data-f="w">
+      <input type="number" min="1" max="12" value="${it.v}" data-i="${i}" data-f="v">
+    `;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll("input").forEach(inp => {
+    inp.addEventListener("change", e => {
+      const i = +e.target.dataset.i, f = e.target.dataset.f;
+      knapsackItems[i][f] = Math.max(1, +e.target.value);
+    });
+  });
+}
+renderItemRows();
+document.getElementById("capSlider").addEventListener("input", e => {
+  document.getElementById("capVal").textContent = e.target.value;
+});
+function runKnapsack() {
+  const capacity = +document.getElementById("capSlider").value;
+  const n = knapsackItems.length;
+  const dp = Array.from({length:n+1}, () => Array(capacity+1).fill(0));
+  for (let i=1;i<=n;i++){
+    for (let w=0; w<=capacity; w++){
+      const it = knapsackItems[i-1];
+      if (it.w <= w) dp[i][w] = Math.max(dp[i-1][w], dp[i-1][w-it.w] + it.v);
+      else dp[i][w] = dp[i-1][w];
+    }
+  }
+  // backtrack
+  let w = capacity, chosen = [];
+  const chosenCells = new Set();
+  for (let i=n;i>=1;i--){
+    if (dp[i][w] !== dp[i-1][w]) {
+      chosen.push(knapsackItems[i-1]);
+      chosenCells.add(i+"-"+w);
+      w -= knapsackItems[i-1].w;
+    }
+  }
+  document.getElementById("knapsackValue").textContent = dp[n][capacity];
+  document.getElementById("knapsackWeight").textContent = chosen.reduce((s,it)=>s+it.w,0);
+
+  const wrap = document.getElementById("dpTableWrap");
+  let html = '<table class="dp"><tr><th>Item \\ Cap</th>';
+  for (let c=0;c<=capacity;c++) html += `<th>${c}</th>`;
+  html += "</tr>";
+  html += `<tr><td class="row-label">none</td>` + Array(capacity+1).fill('<td>0</td>').join("") + "</tr>";
+  for (let i=1;i<=n;i++){
+    html += `<tr><td class="row-label">${knapsackItems[i-1].name}</td>`;
+    for (let c=0;c<=capacity;c++){
+      const isChosen = chosenCells.has(i+"-"+c) && (i===n ? c===capacity : true);
+      html += `<td class="${chosenCells.has(i+"-"+c) ? "chosen" : ""}">${dp[i][c]}</td>`;
+    }
+    html += "</tr>";
+  }
+  html += "</table>";
+  wrap.innerHTML = html;
+}
+document.getElementById("knapsackRunBtn").addEventListener("click", runKnapsack);
+
+// ============================================================
+// MODULE 4 — TSP Branch and Bound
+// ============================================================
+const tspNodes = ["Dock", "SKU-A050", "SKU-B210", "SKU-C330", "SKU-T740"];
+const tspDist = {
+  "Dock":      { "SKU-A050":4, "SKU-B210":6, "SKU-C330":9, "SKU-T740":12 },
+  "SKU-A050":  { "Dock":4, "SKU-B210":3, "SKU-C330":7, "SKU-T740":10 },
+  "SKU-B210":  { "Dock":6, "SKU-A050":3, "SKU-C330":4, "SKU-T740":8 },
+  "SKU-C330":  { "Dock":9, "SKU-A050":7, "SKU-B210":4, "SKU-T740":3 },
+  "SKU-T740":  { "Dock":12, "SKU-A050":10, "SKU-B210":8, "SKU-C330":3 },
+};
+function renderTspChecks() {
+  const wrap = document.getElementById("tspChecks");
+  wrap.innerHTML = "";
+  tspNodes.filter(n => n !== "Dock").forEach(n => {
+    const line = document.createElement("div");
+    line.className = "checkline";
+    line.innerHTML = `<input type="checkbox" id="tsp_${n}" checked><label for="tsp_${n}">${n}</label>`;
+    wrap.appendChild(line);
+  });
+}
+renderTspChecks();
+function runTsp() {
+  const stops = tspNodes.filter(n => n !== "Dock").filter(n => document.getElementById("tsp_"+n).checked);
+  if (stops.length < 2) { alert("Select at least two stops."); return; }
+  clearLog("tspLog");
+  log("tspLog", `Planning a route across: ${stops.join(", ")}`);
+  let bestCost = Infinity, bestPath = null, explored = 0, pruned = 0;
+  const total = factorial(stops.length);
+
+  function minOut(node, remaining) {
+    let m = Infinity;
+    remaining.forEach(r => { if (tspDist[node][r] < m) m = tspDist[node][r]; });
+    return m === Infinity ? 0 : m;
+  }
+  function bound(path, cost, remaining) {
+    let b = cost;
+    if (remaining.length) b += minOut(path[path.length-1], remaining);
+    return b;
+  }
+  function branch(path, cost, remaining) {
+    if (remaining.length === 0) {
+      explored++;
+      const total2 = cost + tspDist[path[path.length-1]]["Dock"];
+      if (total2 < bestCost) { bestCost = total2; bestPath = [...path, "Dock"]; }
+      log("tspLog", `Complete: Dock→${path.slice(1).join("→")}→Dock = ${total2}${total2 <= bestCost ? ' <span class="ok">(new best)</span>' : ''}`);
+      return;
+    }
+    remaining.forEach(next => {
+      const newCost = cost + tspDist[path[path.length-1]][next];
+      const newRemaining = remaining.filter(r => r !== next);
+      const b = bound([...path, next], newCost, newRemaining);
+      if (b < bestCost) {
+        branch([...path, next], newCost, newRemaining);
+      } else {
+        pruned++;
+        log("tspLog", `Prune Dock→${path.slice(1).join("→")}${path.length>1?"→":""}${next}... (bound ${b} ≥ best ${bestCost})`, "no");
+      }
+    });
+  }
+  branch(["Dock"], 0, stops);
+
+  document.getElementById("tspCost").textContent = bestCost;
+  document.getElementById("tspPruned").textContent = pruned + " of " + total;
+  const chipWrap = document.getElementById("tspRoute");
+  chipWrap.innerHTML = "";
+  bestPath.forEach((n, i) => {
+    const chip = document.createElement("span");
+    chip.className = "chip" + (n === "Dock" ? " dock" : "");
+    chip.textContent = n;
+    chipWrap.appendChild(chip);
+    if (i < bestPath.length-1) {
+      const sep = document.createElement("span");
+      sep.className = "arrow-sep";
+      sep.textContent = "→";
+      chipWrap.appendChild(sep);
+    }
+  });
+  log("tspLog", `<span class="ok">Optimal route found: ${bestPath.join(" → ")}, total distance ${bestCost}</span>`);
+}
+function factorial(n){ return n<=1?1:n*factorial(n-1); }
+document.getElementById("tspRunBtn").addEventListener("click", runTsp);
+
+// ============================================================
+// MODULE 5 — Min-Heap
+// ============================================================
+let heap = [];
+function heapPush(task) {
+  heap.push(task);
+  let i = heap.length - 1;
+  while (i > 0) {
+    const p = Math.floor((i-1)/2);
+    if (heap[p].priority > heap[i].priority) { [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; }
+    else break;
+  }
+}
+function heapPop() {
+  if (!heap.length) return null;
+  const top = heap[0];
+  const last = heap.pop();
+  if (heap.length) {
+    heap[0] = last;
+    let i = 0;
+    while (true) {
+      let l = 2*i+1, r = 2*i+2, smallest = i;
+      if (l < heap.length && heap[l].priority < heap[smallest].priority) smallest = l;
+      if (r < heap.length && heap[r].priority < heap[smallest].priority) smallest = r;
+      if (smallest === i) break;
+      [heap[i], heap[smallest]] = [heap[smallest], heap[i]];
+      i = smallest;
+    }
+  }
+  return top;
+}
+function drawHeap() {
+  const svg = document.getElementById("heapSvg");
+  svg.innerHTML = "";
+  if (!heap.length) {
+    const t = svgEl("text", { x: 320, y: 130, "text-anchor":"middle", "font-family":"Inter, sans-serif", "font-size": 13, fill: "var(--muted)" });
+    t.textContent = "Queue is empty";
+    svg.appendChild(t);
+    return;
+  }
+  const positions = {};
+  const levelWidth = 640;
+  function computePos(i, depth, xMin, xMax) {
+    const x = (xMin+xMax)/2;
+    const y = 40 + depth*70;
+    positions[i] = {x,y};
+    const l = 2*i+1, r = 2*i+2;
+    if (l < heap.length) computePos(l, depth+1, xMin, x);
+    if (r < heap.length) computePos(r, depth+1, x, xMax);
+  }
+  computePos(0, 0, 20, 620);
+  heap.forEach((node, i) => {
+    const l = 2*i+1, r = 2*i+2;
+    [l,r].forEach(c => {
+      if (c < heap.length) {
+        svg.appendChild(svgEl("line", { x1: positions[i].x, y1: positions[i].y, x2: positions[c].x, y2: positions[c].y, stroke: "var(--line)", "stroke-width": 1.4 }));
+      }
+    });
+  });
+  heap.forEach((node, i) => {
+    const pos = positions[i];
+    const isRoot = i === 0;
+    svg.appendChild(svgEl("circle", { cx: pos.x, cy: pos.y, r: 28, fill: isRoot ? "var(--accent)" : "var(--panel-raised)", stroke: "var(--line)" }));
+    const t1 = svgEl("text", { x: pos.x, y: pos.y - 3, "text-anchor":"middle", "font-family":"IBM Plex Mono, monospace", "font-size": 11, fill: isRoot ? "white" : "var(--ink)" });
+    t1.textContent = node.label;
+    svg.appendChild(t1);
+    const t2 = svgEl("text", { x: pos.x, y: pos.y + 12, "text-anchor":"middle", "font-family":"Inter, sans-serif", "font-size": 10, fill: isRoot ? "white" : "var(--muted)" });
+    t2.textContent = "urgency " + node.priority;
+    svg.appendChild(t2);
+  });
+}
+document.getElementById("heapAddBtn").addEventListener("click", () => {
+  const label = document.getElementById("taskLabel").value.trim() || "TASK";
+  const priority = +document.getElementById("taskPriority").value || 1;
+  heapPush({ label, priority });
+  drawHeap();
+  log("heapLog", `Inserted <span class="hl">${label}</span> (urgency ${priority}) — sifted up to position ${heap.findIndex(t=>t===heap[0])===0?"root":"—"}`);
+});
+document.getElementById("heapPopBtn").addEventListener("click", () => {
+  const top = heapPop();
+  if (!top) { log("heapLog", `<span class="no">Queue is empty — nothing to dispatch.</span>`); return; }
+  drawHeap();
+  log("heapLog", `<span class="ok">Dispatched ${top.label} (urgency ${top.priority}) — most urgent task in the queue.</span>`);
+});
+drawHeap();
+</script>
+</body>
+</html>
